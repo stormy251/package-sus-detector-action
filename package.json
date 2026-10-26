@@ -1,0 +1,11 @@
+{
+  "name": "package-sus-detector-action",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "GitHub Action that runs the Package Sus Detector Apify Actor on the lockfile changes in a pull request and fails the job when risky packages are added.",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/" },
+  "dependencies": { "apify-client": "^2.25.0" },
+  "license": "MIT"
+}

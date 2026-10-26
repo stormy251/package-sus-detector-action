@@ -1,0 +1,17 @@
+name: Package Sus Detector
+on:
+  pull_request:
+    paths: ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'poetry.lock', 'uv.lock', 'Pipfile.lock', 'requirements.txt']
+permissions:
+  contents: read
+jobs:
+  check-new-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: stormy251/package-sus-detector-action@v1
+        with:
+          apify-token: ${{ secrets.APIFY_TOKEN }}
+          fail-on: suspicious
+          max-total-charge-usd: '2'

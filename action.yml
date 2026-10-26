@@ -1,0 +1,75 @@
+name: Package Sus Detector
+description: Check new or changed npm and PyPI packages in a pull request for hallucinated names, typosquats, known vulnerabilities and abandonment. Uses the pay-per-event Package Sus Detector Apify Actor (you need an Apify API token).
+author: Stormy Adams
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  apify-token:
+    description: Apify API token. Store it as a repository secret and pass it in as secrets.APIFY_TOKEN. Never hard-code it.
+    required: true
+  actor:
+    description: Actor to run.
+    default: stormy251/package-sus-detector
+  lockfiles:
+    description: Newline-separated lockfile paths (package-lock.json, yarn.lock, pnpm-lock.yaml, poetry.lock, uv.lock, Pipfile.lock). Default - every one of these found in the working directory.
+    default: ''
+  requirements:
+    description: Newline-separated requirements.txt paths to check as well (only lines that are new compared with the base are checked).
+    default: ''
+  base-ref:
+    description: Git ref to diff against, for example origin/main. Default - origin/<base branch> on pull_request events. With no base, every package in the lockfile is checked (and charged).
+    default: ''
+  fail-on:
+    description: Fail the job at this verdict - caution (caution or worse), suspicious (suspicious or not_found), not_found, or never (report only).
+    default: suspicious
+  fail-on-risk-score:
+    description: Also fail when any package has a 0-100 risk score at or above this number. Empty to ignore.
+    default: ''
+  include-dev-dependencies:
+    description: Check dev dependencies too (package-lock.json and Pipfile.lock only).
+    default: 'true'
+  max-packages:
+    description: Maximum packages checked per lockfile.
+    default: '200'
+  max-total-charge-usd:
+    description: Hard cap on what one Actor run may charge, in USD. The run stops cleanly at the cap.
+    default: '2'
+  fail-on-error:
+    description: Fail the job when the Actor call itself fails (token, network, outage). Default false, which only warns so an outage does not block merges.
+    default: 'false'
+  dry-run:
+    description: Print what would be sent and the maximum cost, and make no Apify call.
+    default: 'false'
+
+outputs:
+  passed:
+    description: 'true' when every lockfile passed the gate.
+  failing-count:
+    description: Number of packages that failed the gate.
+  packages-checked:
+    description: Number of packages checked (billed).
+
+runs:
+  using: composite
+  steps:
+    - name: Install apify-client
+      shell: bash
+      run: npm install --omit=dev --no-audit --no-fund --prefix "$GITHUB_ACTION_PATH"
+    - name: Run Package Sus Detector
+      shell: bash
+      env:
+        PSD_APIFY_TOKEN: ${{ inputs.apify-token }}
+        PSD_ACTOR: ${{ inputs.actor }}
+        PSD_LOCKFILES: ${{ inputs.lockfiles }}
+        PSD_REQUIREMENTS: ${{ inputs.requirements }}
+        PSD_BASE_REF: ${{ inputs.base-ref }}
+        PSD_FAIL_ON: ${{ inputs.fail-on }}
+        PSD_FAIL_ON_RISK_SCORE: ${{ inputs.fail-on-risk-score }}
+        PSD_INCLUDE_DEV: ${{ inputs.include-dev-dependencies }}
+        PSD_MAX_PACKAGES: ${{ inputs.max-packages }}
+        PSD_MAX_TOTAL_CHARGE_USD: ${{ inputs.max-total-charge-usd }}
+        PSD_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        PSD_DRY_RUN: ${{ inputs.dry-run }}
+      run: node "$GITHUB_ACTION_PATH/run.mjs"
